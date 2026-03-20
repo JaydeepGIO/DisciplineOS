@@ -118,6 +118,7 @@ class PlannedTaskCreate(BaseModel):
     estimated_mins: Optional[int] = None
     scoring_weight: float = 1.0
     task_template_id: Optional[uuid.UUID] = None
+    timer_enabled: bool = False
 
 class PlannedTaskRead(TimestampSchema):
     title: str
@@ -125,8 +126,13 @@ class PlannedTaskRead(TimestampSchema):
     scheduled_time: Optional[time]
     estimated_mins: Optional[int]
     scoring_weight: float
+    timer_enabled: bool = False
     completed: bool = False
     actual_mins: Optional[int] = None
+    total_seconds: int = 0
+    is_running: bool = False
+    started_at: Optional[datetime] = None
+    completion_note: Optional[str] = None
 
 class DailyPlanCreate(BaseModel):
     morning_intention: Optional[str] = None

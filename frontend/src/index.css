@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  :root {
+    --color-background: #f8fafc;
+    --color-surface: #ffffff;
+    --color-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-primary: #6366f1;
+    --color-accent: #f59e0b;
+    --color-success: #10b981;
+    --color-danger: #ef4444;
+    --color-text-primary: #1e293b;
+    --color-text-muted: #64748b;
+  }
+
+  .dark {
+    --color-background: #0a0f1e;
+    --color-surface: #111827;
+    --color-card: #1f2937;
+    --color-border: #374151;
+    --color-primary: #6366f1;
+    --color-accent: #f59e0b;
+    --color-success: #10b981;
+    --color-danger: #ef4444;
+    --color-text-primary: #f1f5f9;
+    --color-text-muted: #94a3b8;
+  }
+
+  body {
+    @apply bg-background text-textPrimary transition-colors duration-300;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

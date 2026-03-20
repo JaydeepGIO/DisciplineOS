@@ -82,6 +82,7 @@ class PlannedTask(Base, TimestampMixin):
     estimated_mins: Mapped[Optional[int]] = mapped_column(nullable=True)
     scoring_weight: Mapped[float] = mapped_column(Numeric, default=1.0)
     tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=[])
+    timer_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     metadata_: Mapped[dict] = mapped_column(JSONB, default={})
 
     __table_args__ = (
@@ -124,6 +125,9 @@ class TaskLog(Base, TimestampMixin):
     log_date: Mapped[date] = mapped_column(Date, nullable=False)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     actual_mins: Mapped[Optional[int]] = mapped_column(nullable=True)
+    total_seconds: Mapped[int] = mapped_column(default=0)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_running: Mapped[bool] = mapped_column(Boolean, default=False)
     completion_note: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     metadata_: Mapped[dict] = mapped_column(JSONB, default={})
