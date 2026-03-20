@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import apiClient from '../api/client';
 import { Zap } from 'lucide-react';
@@ -10,6 +10,8 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +75,7 @@ const Login: React.FC = () => {
               />
             </div>
             
+            {successMessage && <p className="text-primary text-sm font-bold bg-primary/10 p-3 rounded-xl">{successMessage}</p>}
             {error && <p className="text-danger text-sm font-bold bg-danger/10 p-3 rounded-xl">{error}</p>}
 
             <button 
@@ -85,7 +88,7 @@ const Login: React.FC = () => {
           
           <div className="text-center">
             <p className="text-sm text-textMuted">
-              Don't have an account? <span className="text-primary font-bold cursor-pointer hover:underline">Register</span>
+              Don't have an account? <Link to="/register" className="text-primary font-bold hover:underline">Register</Link>
             </p>
           </div>
         </div>

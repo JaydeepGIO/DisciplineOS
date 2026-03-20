@@ -10,6 +10,7 @@ import Reflection from './pages/Reflection';
 import WeeklyView from './pages/WeeklyView';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import { useAuthStore } from './store/authStore';
 
 // Placeholder for remaining
@@ -53,5 +54,9 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
   },
 ]);
