@@ -14,14 +14,18 @@ Start-Sleep -Seconds 10
 Write-Host "Creating database tables..." -ForegroundColor Green
 docker compose exec backend python init_db.py
 
-# 4. Seed with demo data
-Write-Host "Seeding demo data (tester@example.com / password123)..." -ForegroundColor Green
-docker compose exec backend python seed_data.py
+# 4. Optional: Seed with demo data
+# If you want to use the demo account (test@example.com / password123),
+# run: docker compose exec backend python seed_data.py
 
 Write-Host "Setup Complete!" -ForegroundColor Cyan
 Write-Host "------------------------------------------------"
 Write-Host "Frontend: http://localhost:5173"
 Write-Host "API Docs: http://localhost:8000/docs"
+Write-Host ""
+Write-Host "Next Steps:"
+Write-Host "1. Go to http://localhost:5173/register to create your account."
+Write-Host "2. Or run 'docker compose exec backend python seed_data.py' for demo data."
 Write-Host "------------------------------------------------"
 Write-Host "Run 'docker compose logs -f' to see real-time output."
 Write-Host "To stop the project, run './stop.ps1'."

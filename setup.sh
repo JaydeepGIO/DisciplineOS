@@ -15,14 +15,18 @@ sleep 5
 echo "🏗️ Creating database tables..."
 docker compose exec backend python init_db.py
 
-# 4. Seed with demo data
-echo "🌱 Seeding demo data (tester@example.com / password123)..."
-docker compose exec backend python seed_data.py
+# 4. Optional: Seed with demo data
+# If you want to use the demo account (test@example.com / password123),
+# run: docker compose exec backend python seed_data.py
 
 echo "✅ Setup Complete!"
 echo "------------------------------------------------"
 echo "Frontend: http://localhost:5173"
 echo "API Docs: http://localhost:8000/docs"
+echo ""
+echo "Next Steps:"
+echo "1. Go to http://localhost:5173/register to create your account."
+echo "2. Or run 'docker compose exec backend python seed_data.py' for demo data."
 echo "------------------------------------------------"
 echo "Run 'docker compose logs -f' to see real-time output."
 echo "To stop the project, run './stop.sh'."
