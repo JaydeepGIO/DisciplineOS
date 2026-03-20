@@ -48,13 +48,20 @@
    git clone https://github.com/yourusername/DisciplineOS.git
    cd DisciplineOS
    ```
-2. Start the entire ecosystem:
-   ```bash
-   docker-compose up --build
-   ```
+2. Run the automated setup script:
+   - **Linux/macOS**:
+     ```bash
+     chmod +x setup.sh && ./setup.sh
+     ```
+   - **Windows (PowerShell)**:
+     ```powershell
+     .\setup.ps1
+     ```
 3. Access the application:
    - Frontend: `http://localhost:5173`
    - API Docs: `http://localhost:8000/docs`
+
+*The script builds the images, starts the database/Redis, and seeds the database with a demo account (`test@example.com` / `password123`).*
 
 ### Option 2: Manual Setup
 See the detailed [Backend Setup](backend/README.md) and [Frontend Setup](frontend/README.md) guides.
