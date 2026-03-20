@@ -51,7 +51,7 @@
 2. Run the automated setup script:
    - **Linux/macOS**:
      ```bash
-     chmod +x setup.sh && ./setup.sh
+     chmod +x setup.sh stop.sh && ./setup.sh
      ```
    - **Windows (PowerShell)**:
      ```powershell
@@ -61,10 +61,28 @@
    - Frontend: `http://localhost:5173`
    - API Docs: `http://localhost:8000/docs`
 
+4. To stop the application:
+   - **Linux/macOS**:
+     ```bash
+     ./stop.sh
+     ```
+   - **Windows (PowerShell)**:
+     ```powershell
+     .\stop.ps1
+     ```
+
 *The script builds the images, starts the database/Redis, and seeds the database with a demo account (`test@example.com` / `password123`).*
 
 ### Option 2: Manual Setup
 See the detailed [Backend Setup](backend/README.md) and [Frontend Setup](frontend/README.md) guides.
+
+---
+
+## 🛠 Docker Commands
+- **Start All Services**: `docker compose up -d`
+- **Stop All Services**: `docker compose down`
+- **View Logs**: `docker compose logs -f`
+- **Rebuild Containers**: `docker compose up -d --build`
 
 ---
 
