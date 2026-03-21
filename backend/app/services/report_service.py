@@ -117,11 +117,12 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
             habit_performance = {}
             for log, template in habits_result:
                 d_str = log.log_date.isoformat()
+                is_completed = log.completion_ratio >= 1.0
                 if d_str in date_map:
                     date_map[d_str]["habits_logged"].append({
                         "name": template.name,
-                        "status": "completed" if log.completed else "missed",
-                        "value": float(log.numeric_value) if log.numeric_value else (1.0 if log.completed else 0.0),
+                        "status": "completed" if is_completed else "missed",
+                        "value": float(log.numeric_value) if log.numeric_value else (1.0 if is_completed else 0.0),
                         "notes": log.notes
                     })
                 
@@ -129,7 +130,7 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                 if template.name not in habit_performance:
                     habit_performance[template.name] = {"total": 0, "completed": 0}
                 habit_performance[template.name]["total"] += 1
-                if log.completed:
+                if is_completed:
                     habit_performance[template.name]["completed"] += 1
 
             if habit_performance:
@@ -169,20 +170,44 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
 
             # Fetch Reflections
             ref_result = await db.execute(
-                select(ReflectionEntry).filter(
+                select(ReflectionEntry, ReflectionTemplate)
+                .outerjoin(ReflectionTemplate, ReflectionEntry.template_id == ReflectionTemplate.id)
+                .filter(
                     ReflectionEntry.user_id == user_id,
                     ReflectionEntry.entry_date >= start_date,
                     ReflectionEntry.entry_date <= end_date
                 )
             )
-            for r in ref_result.scalars().all():
-                d_str = r.entry_date.isoformat()
+            for entry, template in ref_result:
+                d_str = entry.entry_date.isoformat()
+                
+                # Map UUID keys to human-readable question text
+                readable_answers = {}
+                if template and template.questions:
+                    q_map = {q['id']: q['text'] for q in template.questions}
+                    for q_id, ans in entry.answers.items():
+                        q_text = q_map.get(str(q_id), f"Question_{str(q_id)[:8]}")
+                        # If ans is a dict, get the text or rating; otherwise use it directly
+                        if isinstance(ans, dict):
+                            readable_answers[q_text] = ans.get('text') if ans.get('text') is not None else ans.get('rating')
+                        else:
+                            readable_answers[q_text] = ans
+                else:
+                    readable_answers = entry.answers # Fallback to raw if no template
+
                 if d_str in date_map:
                     date_map[d_str]["reflection"] = {
-                        "mood": r.mood_score,
-                        "energy": r.energy_score,
-                        "notes": r.answers # Contains the full Q&A
+                        "mood": entry.mood_score,
+                        "energy": entry.energy_score,
+                        "notes": readable_answers
                     }
+                
+                report_data["reflections"].append({
+                    "date": d_str,
+                    "mood": entry.mood_score,
+                    "energy": entry.energy_score,
+                    "answers": readable_answers
+                })
 
             report_data["time_series_data"] = list(date_map.values())
 
