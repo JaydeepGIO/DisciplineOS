@@ -63,7 +63,9 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                     "lowest_performing_habit": "N/A"
                 },
                 "time_series_data": [],
-                "streak_data": []
+                "streak_data": [],
+                "reflections": [],
+                "tasks": []
             }
 
             # 2. Daily Data Aggregation (Time Series)
