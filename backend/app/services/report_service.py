@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 from sqlalchemy.future import select
 from sqlalchemy import and_, func, desc
 from ..database import async_session
-from ..models import User, DisciplineScore, HabitLog, HabitTemplate, TaskLog, PlannedTask, ReflectionEntry, Streak, DailyPlan
+from ..models import User, DisciplineScore, HabitLog, HabitTemplate, TaskLog, PlannedTask, ReflectionEntry, Streak, DailyPlan, ReflectionTemplate
 import os
 import traceback
 import json
@@ -63,7 +63,9 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                     "lowest_performing_habit": "N/A"
                 },
                 "time_series_data": [],
-                "streak_data": []
+                "streak_data": [],
+                "reflections": [],
+                "tasks": []
             }
 
             # 2. Daily Data Aggregation (Time Series)
