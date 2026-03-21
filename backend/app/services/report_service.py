@@ -5,6 +5,7 @@ from ..database import async_session
 from ..models import User, DisciplineScore, HabitLog, HabitTemplate, TaskLog, PlannedTask, ReflectionEntry, Streak
 import os
 import traceback
+import json
 
 # Try to import weasyprint for PDF generation
 try:
@@ -27,25 +28,20 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
         start_date = parse_date(config.get("period_start"))
         end_date = parse_date(config.get("period_end"))
         format_ = config.get("format", "pdf")
-        sections = config.get("include_sections", ["scores", "habits", "reflections", "streaks"])
+        sections = config.get("include_sections", ["scores", "habits", "reflections", "streaks", "tasks"])
         
         # Determine absolute storage path
-        # Assuming we are in backend/app/services/report_service.py
-        # backend is 3 levels up
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         storage_dir = os.path.join(base_dir, "generated_reports")
         if not os.path.exists(storage_dir):
             os.makedirs(storage_dir)
             
         print(f"[REPORT] Starting generation for user {user_id}, Job: {job_id}")
-        print(f"[REPORT] Storage directory: {storage_dir}")
 
         async with async_session() as db:
-            # Fetch User
             user_result = await db.execute(select(User).filter(User.id == user_id))
             user = user_result.scalars().first()
             if not user:
-                print(f"[REPORT] User {user_id} not found")
                 return None
                 
             report_data = {
@@ -55,31 +51,31 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                 "scores": [],
                 "habits": [],
                 "reflections": [],
+                "tasks": [],
                 "streaks": []
             }
             
-            # 1. Fetch Scores
+            # 1. Scores
             if "scores" in sections:
                 scores_result = await db.execute(
-                    select(DisciplineScore)
-                    .filter(
+                    select(DisciplineScore).filter(
                         DisciplineScore.user_id == user_id,
                         DisciplineScore.score_date >= start_date,
                         DisciplineScore.score_date <= end_date,
                         DisciplineScore.period_type == "daily"
-                    )
-                    .order_by(DisciplineScore.score_date)
+                    ).order_by(DisciplineScore.score_date)
                 )
                 report_data["scores"] = [
                     {
                         "date": s.score_date.isoformat(),
                         "total": float(s.raw_score),
                         "habits": float(s.habit_score),
-                        "tasks": float(s.task_score)
+                        "tasks": float(s.task_score),
+                        "reflection": float(s.reflection_score)
                     } for s in scores_result.scalars().all()
                 ]
                 
-            # 2. Fetch Habit Logs
+            # 2. Habit Logs
             if "habits" in sections:
                 habits_result = await db.execute(
                     select(HabitLog, HabitTemplate)
@@ -88,37 +84,57 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                         HabitLog.user_id == user_id,
                         HabitLog.log_date >= start_date,
                         HabitLog.log_date <= end_date
-                    )
-                    .order_by(HabitLog.log_date)
+                    ).order_by(HabitLog.log_date)
                 )
                 for log, template in habits_result:
                     report_data["habits"].append({
                         "date": log.log_date.isoformat(),
                         "name": template.name,
                         "completed": log.completed,
-                        "value": float(log.numeric_value) if log.numeric_value else None
+                        "value": float(log.numeric_value) if log.numeric_value else None,
+                        "notes": log.notes
                     })
+            
+            # 3. Tasks
+            if "tasks" in sections:
+                tasks_result = await db.execute(
+                    select(PlannedTask)
+                    .join(User, PlannedTask.user_id == User.id)
+                    .filter(
+                        PlannedTask.user_id == user_id,
+                        PlannedTask.created_at >= datetime.combine(start_date, datetime.min.time()),
+                        PlannedTask.created_at <= datetime.combine(end_date, datetime.max.time())
+                    ).order_by(PlannedTask.created_at)
+                )
+                report_data["tasks"] = [
+                    {
+                        "title": t.title,
+                        "completed": t.completed,
+                        "priority": t.priority_rank,
+                        "actual_mins": t.actual_mins,
+                        "note": t.completion_note
+                    } for t in tasks_result.scalars().all()
+                ]
                     
-            # 3. Fetch Reflections
+            # 4. Reflections
             if "reflections" in sections:
                 ref_result = await db.execute(
-                    select(ReflectionEntry)
-                    .filter(
+                    select(ReflectionEntry).filter(
                         ReflectionEntry.user_id == user_id,
                         ReflectionEntry.entry_date >= start_date,
                         ReflectionEntry.entry_date <= end_date
-                    )
-                    .order_by(ReflectionEntry.entry_date)
+                    ).order_by(ReflectionEntry.entry_date)
                 )
                 report_data["reflections"] = [
                     {
                         "date": r.entry_date.isoformat(),
                         "mood": r.mood_score,
-                        "energy": r.energy_score
+                        "energy": r.energy_score,
+                        "answers": r.answers
                     } for r in ref_result.scalars().all()
                 ]
                 
-            # 4. Fetch Streaks
+            # 5. Streaks
             if "streaks" in sections:
                 streaks_result = await db.execute(
                     select(Streak, HabitTemplate)
@@ -134,7 +150,14 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                 ]
 
         # Generate Output
-        print(f"[REPORT] Data fetched, generating file output...")
+        print(f"[REPORT] Data fetched, generating file output in {format_} format...")
+
+        if format_ == "json":
+            output_path = os.path.join(storage_dir, f"report_{job_id}.json")
+            with open(output_path, "w") as f:
+                json.dump(report_data, f, indent=2)
+            print(f"[REPORT] Successfully generated JSON: {output_path}")
+            return output_path
 
         if format_ == "pdf" and WEASYPRINT_AVAILABLE:
             html_content = f"""
