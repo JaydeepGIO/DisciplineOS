@@ -61,8 +61,19 @@ async def delete_habit(id: uuid.UUID, current_user: User = Depends(get_current_u
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")
     
+    # 1. Mark habit as deleted
     habit.deleted_at = datetime.utcnow()
     habit.is_active = False
+    
+    # 2. Cleanup associated streak
+    from ..models import Streak
+    await db.execute(
+        update(Streak).filter(Streak.habit_id == id).values(current_streak=0)
+    )
+    # Alternatively, delete the streak entirely to keep DB small
+    from sqlalchemy import delete
+    await db.execute(delete(Streak).filter(Streak.habit_id == id))
+    
     await db.commit()
     return None
 

@@ -217,7 +217,11 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
             streaks_result = await db.execute(
                 select(Streak, HabitTemplate)
                 .join(HabitTemplate, Streak.habit_id == HabitTemplate.id)
-                .filter(Streak.user_id == user_id)
+                .filter(
+                    Streak.user_id == user_id,
+                    HabitTemplate.is_active == True,
+                    HabitTemplate.deleted_at == None
+                )
             )
             for s, template in streaks_result:
                 report_data["streak_data"].append({
