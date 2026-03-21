@@ -199,7 +199,8 @@ const Settings: React.FC = () => {
   const handleDownload = async () => {
     if (activeJobId) {
       try {
-        const filename = `DisciplineOS_Report_${activeJobId.substring(0, 8)}.txt`;
+        const extension = reportConfig.format === 'pdf' ? 'pdf' : (reportConfig.format === 'json' ? 'json' : 'csv');
+        const filename = `DisciplineOS_Report_${activeJobId.substring(0, 8)}.${extension}`;
         await reportsApi.downloadReport(activeJobId, filename);
         setActiveJobId(null);
       } catch (error) {
@@ -445,6 +446,7 @@ const Settings: React.FC = () => {
                     >
                       <option value="pdf">PDF Document</option>
                       <option value="csv">CSV Spreadsheet</option>
+                      <option value="json">JSON (for AI Context)</option>
                     </select>
                   </div>
                 </div>
