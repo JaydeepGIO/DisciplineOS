@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 from sqlalchemy.future import select
 from sqlalchemy import and_, func, desc
 from ..database import async_session
-from ..models import User, DisciplineScore, HabitLog, HabitTemplate, TaskLog, PlannedTask, ReflectionEntry, Streak, DailyPlan
+from ..models import User, DisciplineScore, HabitLog, HabitTemplate, TaskLog, PlannedTask, ReflectionEntry, Streak, DailyPlan, ReflectionTemplate
 import os
 import traceback
 import json
