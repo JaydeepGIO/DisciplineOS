@@ -18,6 +18,13 @@ try:
 except Exception:
     WEASYPRINT_AVAILABLE = False
 
+# Try to import fpdf2 for a basic driver-free fallback
+try:
+    from fpdf import FPDF
+    FPDF_AVAILABLE = True
+except Exception:
+    FPDF_AVAILABLE = False
+
 async def generate_user_report(user_id: str, job_id: str, config: dict):
     try:
         report_type = config.get("report_type", "weekly")
@@ -49,6 +56,7 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                     "timezone": user.timezone,
                     "preferences": user.preferences
                 },
+                "period": f"{start_date} to {end_date}",
                 "summary_metrics": {
                     "average_discipline_score": 0,
                     "top_performing_habit": "N/A",
@@ -313,6 +321,47 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
             """
             output_path = os.path.join(storage_dir, f"report_{job_id}.pdf")
             HTML(string=html_content).write_pdf(output_path)
+            return output_path
+
+        elif format_ == "pdf" and FPDF_AVAILABLE:
+            # Basic PDF fallback using fpdf2 (No external drivers needed)
+            output_path = os.path.join(storage_dir, f"report_{job_id}.pdf")
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 16)
+            pdf.cell(0, 10, "DisciplineOS Performance Report", ln=True, align="C")
+            pdf.set_font("Arial", "", 10)
+            pdf.cell(0, 10, f"User: {report_data['user_profile']['username']} | Period: {report_data['period']}", ln=True, align="C")
+            pdf.ln(10)
+            
+            # Summary
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 10, "Summary Metrics", ln=True)
+            pdf.set_font("Arial", "", 10)
+            pdf.cell(0, 8, f"Average Discipline Score: {report_data['summary_metrics']['average_discipline_score']}", ln=True)
+            pdf.cell(0, 8, f"Top Performing Habit: {report_data['summary_metrics']['top_performing_habit']}", ln=True)
+            pdf.ln(5)
+            
+            # Table Header
+            pdf.set_font("Arial", "B", 10)
+            pdf.cell(40, 10, "Date", border=1)
+            pdf.cell(30, 10, "Score", border=1)
+            pdf.cell(30, 10, "Habits", border=1)
+            pdf.cell(30, 10, "Tasks", border=1)
+            pdf.cell(30, 10, "Reflection", border=1)
+            pdf.ln()
+            
+            pdf.set_font("Arial", "", 10)
+            for d in report_data["time_series_data"]:
+                if d["score"] > 0:
+                    pdf.cell(40, 10, d["date"], border=1)
+                    pdf.cell(30, 10, f"{d['score']:.1f}", border=1)
+                    pdf.cell(30, 10, f"{d['breakdown']['habits']:.1f}", border=1)
+                    pdf.cell(30, 10, f"{d['breakdown']['tasks']:.1f}", border=1)
+                    pdf.cell(30, 10, f"{d['breakdown']['reflection']:.1f}", border=1)
+                    pdf.ln()
+            
+            pdf.output(output_path)
             return output_path
 
         # Default fallback to TXT
