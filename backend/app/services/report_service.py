@@ -220,7 +220,8 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
                 .filter(
                     Streak.user_id == user_id,
                     HabitTemplate.is_active == True,
-                    HabitTemplate.deleted_at == None
+                    HabitTemplate.deleted_at == None,
+                    (Streak.current_streak > 0) | (Streak.longest_streak > 0)
                 )
             )
             for s, template in streaks_result:

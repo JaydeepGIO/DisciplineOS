@@ -24,8 +24,7 @@ def check_broken_streaks():
             )
             await db.execute(stmt)
             
-            # 2. Cleanup orphan streaks (habits that are deleted or inactive)
-            # Find streak IDs where habit is deleted or inactive
+            # 2. Cleanup streaks for habits that are deleted or inactive
             orphan_stmt = (
                 delete(Streak)
                 .where(
@@ -37,6 +36,15 @@ def check_broken_streaks():
                 )
             )
             await db.execute(orphan_stmt)
+
+            # 3. Aggressive Cleanup: Remove streaks where the habit template no longer exists at all
+            missing_stmt = (
+                delete(Streak)
+                .where(
+                    ~Streak.habit_id.in_(select(HabitTemplate.id))
+                )
+            )
+            await db.execute(missing_stmt)
             
             await db.commit()
             
