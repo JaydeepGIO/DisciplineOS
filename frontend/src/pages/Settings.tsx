@@ -199,7 +199,7 @@ const Settings: React.FC = () => {
   const handleDownload = async () => {
     if (activeJobId) {
       try {
-        const extension = reportConfig.format === 'pdf' ? 'pdf' : (reportConfig.format === 'json' ? 'json' : 'csv');
+        const extension = reportConfig.format === 'pdf' ? 'pdf' : (reportConfig.format === 'json' ? 'json' : 'zip');
         const filename = `DisciplineOS_Report_${activeJobId.substring(0, 8)}.${extension}`;
         await reportsApi.downloadReport(activeJobId, filename);
         setActiveJobId(null);
@@ -429,7 +429,30 @@ const Settings: React.FC = () => {
                     <label className="text-xs font-bold uppercase tracking-widest text-textMuted">Report Type</label>
                     <select 
                       value={reportConfig.report_type}
-                      onChange={(e) => setReportConfig(prev => ({ ...prev, report_type: e.target.value as any }))}
+                      onChange={(e) => {
+                        const type = e.target.value as any;
+                        let start = reportConfig.period_start;
+                        let end = new Date().toISOString().split('T')[0];
+                        
+                        if (type === 'weekly') {
+                          const d = new Date();
+                          d.setDate(d.getDate() - 7);
+                          start = d.toISOString().split('T')[0];
+                        } else if (type === 'monthly') {
+                          const d = new Date();
+                          d.setMonth(d.getMonth() - 1);
+                          start = d.toISOString().split('T')[0];
+                        } else if (type === 'full') {
+                          start = '2020-01-01'; // Default broad start
+                        }
+                        
+                        setReportConfig(prev => ({ 
+                          ...prev, 
+                          report_type: type,
+                          period_start: start,
+                          period_end: end
+                        }));
+                      }}
                       className="w-full bg-surface border border-border rounded-xl px-4 py-3 font-bold text-textPrimary focus:outline-none"
                     >
                       <option value="full">Full History</option>
@@ -445,9 +468,28 @@ const Settings: React.FC = () => {
                       className="w-full bg-surface border border-border rounded-xl px-4 py-3 font-bold text-textPrimary focus:outline-none"
                     >
                       <option value="pdf">PDF Document</option>
-                      <option value="csv">CSV Spreadsheet</option>
+                      <option value="csv">CSV Spreadsheet (ZIP)</option>
                       <option value="json">JSON (for AI Context)</option>
                     </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-textMuted">Start Date</label>
+                    <input 
+                      type="date"
+                      value={reportConfig.period_start}
+                      onChange={(e) => setReportConfig(prev => ({ ...prev, period_start: e.target.value }))}
+                      className="w-full bg-surface border border-border rounded-xl px-4 py-3 font-bold text-textPrimary focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-textMuted">End Date</label>
+                    <input 
+                      type="date"
+                      value={reportConfig.period_end}
+                      onChange={(e) => setReportConfig(prev => ({ ...prev, period_end: e.target.value }))}
+                      className="w-full bg-surface border border-border rounded-xl px-4 py-3 font-bold text-textPrimary focus:outline-none"
+                    />
                   </div>
                 </div>
 

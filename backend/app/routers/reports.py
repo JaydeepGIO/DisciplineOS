@@ -34,7 +34,7 @@ async def get_report_status(
     download_url = None
     
     # Check for any possible extension
-    for ext in [".pdf", ".txt", ".csv"]:
+    for ext in [".pdf", ".txt", ".csv", ".json", ".zip"]:
         f_path = os.path.join(storage_dir, f"report_{job_id}{ext}")
         if os.path.exists(f_path):
             status = "completed"
@@ -58,13 +58,15 @@ async def download_report(
     file_path = None
     media_type = "application/octet-stream"
     
-    for ext in [".pdf", ".txt", ".csv"]:
+    for ext in [".pdf", ".txt", ".csv", ".json", ".zip"]:
         f_path = os.path.join(storage_dir, f"report_{job_id}{ext}")
         if os.path.exists(f_path):
             file_path = f_path
             if ext == ".pdf": media_type = "application/pdf"
             elif ext == ".txt": media_type = "text/plain"
             elif ext == ".csv": media_type = "text/csv"
+            elif ext == ".json": media_type = "application/json"
+            elif ext == ".zip": media_type = "application/zip"
             break
             
     if not file_path:
