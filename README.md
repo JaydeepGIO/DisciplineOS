@@ -40,7 +40,7 @@
 
 ### Prerequisites
 - Docker & Docker Compose
-- *OR* (Python 3.11, Node 20+, PostgreSQL, Redis)
+- *OR* using the longer route for edits (Python 3.11, Node 20+, PostgreSQL, Redis)
 
 ### Option 1: Quick Start with Docker (Recommended)
 1. Clone the repository:
