@@ -116,7 +116,7 @@ class HabitLog(Base, TimestampMixin):
         if self.target_value and self.target_value > 0:
             actual = self.numeric_value or (self.duration_secs / 60 if self.duration_secs else 0)
             return min(actual / float(self.target_value), 1.0)
-        return 1.0
+        return 0.0
 
 class TaskLog(Base, TimestampMixin):
     __tablename__ = "task_logs"
