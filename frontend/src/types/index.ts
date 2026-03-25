@@ -139,3 +139,15 @@ export interface DashboardData {
   streaks: Streak[];
   week_score_trend: number[];
 }
+
+export type TimeBlockStatus = 'planned' | 'active' | 'completed' | 'missed';
+
+export interface TimeBlock extends TimestampFields {
+  user_id: string;
+  task_id?: string | null;
+  title: string;
+  start_time: string; // ISO string
+  end_time: string; // ISO string
+  status: TimeBlockStatus;
+  metadata?: Record<string, any>;
+}

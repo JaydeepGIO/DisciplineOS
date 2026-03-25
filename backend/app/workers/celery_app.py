@@ -1,6 +1,9 @@
 from celery import Celery
 from ..config import settings
 
+# Explicitly import tasks to ensure they are registered with the app
+from .tasks import analytics_tasks, streak_tasks, report_tasks, notification_tasks, time_block_tasks
+
 celery_app = Celery(
     "disciplineos",
     broker=settings.CELERY_BROKER_URL,
@@ -10,6 +13,7 @@ celery_app = Celery(
         "app.workers.tasks.streak_tasks",
         "app.workers.tasks.report_tasks",
         "app.workers.tasks.notification_tasks",
+        "app.workers.tasks.time_block_tasks",
     ]
 )
 

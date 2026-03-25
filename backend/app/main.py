@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .routers import auth, habits, tracking, plans, reflections, analytics, scoring, reports
+from .routers import auth, habits, tracking, plans, reflections, analytics, scoring, reports, time_blocks
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -21,6 +21,7 @@ app.include_router(reflections.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(scoring.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(time_blocks.router, prefix="/api")
 
 @app.get("/")
 async def root():

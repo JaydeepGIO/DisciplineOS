@@ -24,7 +24,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - SECRET_KEY=dev-secret-key-replace-in-prod
+      - SECRET_KEY=${SECRET_KEY}
       - CORS_ORIGINS=http://localhost:5173
     ports:
       - "8000:8000"
@@ -40,6 +40,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - db
       - redis
@@ -52,9 +53,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
-    depends_on:
-      - db
-      - redis
+      - SECRET_KEY=${SECRET_KEY}
 
   frontend:
     build: ./frontend

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { plansApi, CreatePlanInput } from '../api/plans';
-import { DailyPlan, PlannedTask } from '../types';
-import { format } from 'date-fns';
-import { Plus, Trash2, GripVertical, Clock, Target, CalendarDays, Save, CheckCircle2, Timer } from 'lucide-react';
+import { createTimeBlock, getDailyTimeBlocks } from '../api/time-blocks';
+import { DailyPlan, PlannedTask, TimeBlock } from '../types';
+import { format, addMinutes, parseISO } from 'date-fns';
+import { Plus, Trash2, GripVertical, Clock, Target, CalendarDays, Save, CheckCircle2, Timer, CalendarCheck } from 'lucide-react';
+import DailyTimeline from '../components/tracking/DailyTimeline';
 
 const DailyPlanner: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -14,10 +16,15 @@ const DailyPlanner: React.FC = () => {
   const [generalNotes, setGeneralNotes] = useState('');
   const [isSaved, setIsSaved] = useState(true);
 
-  const { data: plan, isLoading } = useQuery<DailyPlan>({
+  const { data: plan, isLoading: planLoading } = useQuery<DailyPlan>({
     queryKey: ['plan', dateStr],
     queryFn: () => plansApi.getPlan(dateStr),
     retry: false,
+  });
+
+  const { data: blocks } = useQuery<TimeBlock[]>({
+    queryKey: ['time-blocks', dateStr],
+    queryFn: () => getDailyTimeBlocks(dateStr),
   });
 
   useEffect(() => {
@@ -71,7 +78,18 @@ const DailyPlanner: React.FC = () => {
     mutationFn: (id: string) => plansApi.deleteTask(dateStr, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plan', dateStr] });
+      queryClient.invalidateQueries({ queryKey: ['time-blocks', dateStr] });
     },
+  });
+
+  const timeBlockMutation = useMutation({
+    mutationFn: createTimeBlock,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time-blocks', dateStr] });
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.detail || 'Failed to create time block');
+    }
   });
 
   const handleSavePlan = () => {
@@ -91,8 +109,40 @@ const DailyPlanner: React.FC = () => {
     setIsSaved(false);
   };
 
+  const handleTaskDrop = (taskId: string, startTime: string) => {
+    const task = plan?.tasks.find(t => t.id === taskId);
+    if (task) {
+      // Prevent duplicate drop if already scheduled (Frontend check)
+      const isAlreadyScheduled = blocks?.some(b => b.task_id === taskId);
+      if (isAlreadyScheduled) {
+        alert('This task is already scheduled.');
+        return;
+      }
+
+      const duration = task.estimated_mins || 60;
+      const endTime = format(addMinutes(parseISO(startTime), duration), "yyyy-MM-dd'T'HH:mm:ssXXX");
+      
+      timeBlockMutation.mutate({
+        title: task.title,
+        start_time: startTime,
+        end_time: endTime,
+        task_id: task.id,
+      });
+    }
+  };
+
+  const onDragStart = (e: React.DragEvent, taskId: string) => {
+    const isAlreadyScheduled = blocks?.some(b => b.task_id === taskId);
+    if (isAlreadyScheduled) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.setData('taskId', taskId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-textPrimary">Daily Planner</h2>
@@ -127,74 +177,84 @@ const DailyPlanner: React.FC = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Morning Intention & Notes */}
-        <div className="lg:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left: Intention & Notes */}
+        <div className="lg:col-span-3 space-y-6">
           <div className="bg-card border border-border p-6 rounded-[2rem] space-y-4 shadow-sm group hover:border-accent/30 transition-all">
             <h3 className="font-bold flex items-center gap-2 text-textPrimary uppercase text-xs tracking-widest">
               <Target className="w-4 h-4 text-accent" />
-              Morning Intention
+              Intention
             </h3>
             <textarea 
-              placeholder="What is your primary focus for today?"
-              className="w-full bg-surface border border-border rounded-2xl p-4 text-sm min-h-[140px] focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all font-medium text-textPrimary"
+              placeholder="Primary focus?"
+              className="w-full bg-surface border border-border rounded-2xl p-4 text-sm min-h-[100px] focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all font-medium text-textPrimary"
               value={morningIntention}
               onChange={(e) => handleIntentionChange(e.target.value)}
             />
           </div>
           
           <div className="bg-card border border-border p-6 rounded-[2rem] space-y-4 shadow-sm group hover:border-primary/30 transition-all">
-            <h3 className="font-bold text-textPrimary uppercase text-xs tracking-widest">General Notes</h3>
+            <h3 className="font-bold text-textPrimary uppercase text-xs tracking-widest">Notes</h3>
             <textarea 
-              placeholder="Any other reminders or context..."
-              className="w-full bg-surface border border-border rounded-2xl p-4 text-sm min-h-[140px] focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-medium text-textPrimary"
+              placeholder="Context..."
+              className="w-full bg-surface border border-border rounded-2xl p-4 text-sm min-h-[100px] focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-medium text-textPrimary"
               value={generalNotes}
               onChange={(e) => handleNotesChange(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Task List */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Center: Task List */}
+        <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between px-4">
-            <h3 className="text-xl font-bold text-textPrimary">Planned Tasks</h3>
-            <span className="text-[10px] font-bold text-textMuted uppercase bg-surface px-2 py-1 rounded-md border border-border">{plan?.tasks?.length || 0} Tasks</span>
+            <h3 className="text-xl font-bold text-textPrimary">Tasks</h3>
+            <span className="text-[10px] font-bold text-textMuted uppercase bg-surface px-2 py-1 rounded-md border border-border">{plan?.tasks?.length || 0}</span>
           </div>
 
           <div className="space-y-3">
-            {plan?.tasks?.map((task) => (
-              <div key={task.id} className="bg-card border border-border p-4 rounded-2xl flex items-center gap-4 group hover:border-primary/30 transition-all shadow-sm">
-                <div className="w-8 h-8 rounded-xl bg-surface flex items-center justify-center border border-border group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-                  <GripVertical className="w-4 h-4 text-textMuted" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-textPrimary">{task.title}</h4>
-                  <div className="flex items-center gap-3 mt-1 text-[10px] text-textMuted font-bold uppercase tracking-tight">
-                    {task.scheduled_time && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-primary" />
-                        {task.scheduled_time}
-                      </span>
-                    )}
-                    {task.estimated_mins && (
-                      <span>• {task.estimated_mins} mins</span>
-                    )}
-                    {task.timer_enabled && (
-                      <span className="flex items-center gap-1 text-primary">
-                        <Timer className="w-3 h-3" />
-                        Timer On
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button 
-                  onClick={() => deleteTaskMutation.mutate(task.id)}
-                  className="p-2 opacity-0 group-hover:opacity-100 hover:bg-danger/10 rounded-xl text-danger transition-all border border-transparent hover:border-danger/20"
+            {plan?.tasks?.map((task) => {
+              const isScheduled = blocks?.some(b => b.task_id === task.id);
+              return (
+                <div 
+                  key={task.id} 
+                  draggable={!isScheduled}
+                  onDragStart={(e) => onDragStart(e, task.id)}
+                  className={`bg-card border p-4 rounded-2xl flex items-center gap-4 group transition-all shadow-sm ${isScheduled ? 'border-success/20 opacity-60 cursor-not-allowed bg-success/[0.02]' : 'border-border hover:border-accent/50 hover:shadow-md cursor-grab active:cursor-grabbing'}`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${isScheduled ? 'bg-success/10 border-success/20 text-success' : 'bg-surface border-border group-hover:bg-accent/10 group-hover:border-accent/20 text-textMuted group-hover:text-accent'}`}>
+                    {isScheduled ? <CalendarCheck className="w-4 h-4" /> : <GripVertical className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-textPrimary text-sm">{task.title}</h4>
+                      {isScheduled && (
+                        <span className="text-[8px] font-black bg-success/10 text-success px-1.5 py-0.5 rounded-md uppercase tracking-tighter">Scheduled</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-[10px] text-textMuted font-bold uppercase tracking-tight">
+                      {task.estimated_mins && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {task.estimated_mins}m
+                        </span>
+                      )}
+                      {task.timer_enabled && (
+                        <span className="flex items-center gap-1 text-primary">
+                          <Timer className="w-3 h-3" />
+                          Timer
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => deleteTaskMutation.mutate(task.id)}
+                    className="p-2 opacity-0 group-hover:opacity-100 hover:bg-danger/10 rounded-xl text-danger transition-all border border-transparent hover:border-danger/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
 
             <form 
               onSubmit={(e) => { 
@@ -206,78 +266,65 @@ const DailyPlanner: React.FC = () => {
                   timer_enabled: timerEnabled 
                 }); 
               }}
-              className="bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col gap-4 group-hover:bg-card transition-all"
+              className="bg-surface border border-dashed border-border rounded-2xl p-4 flex flex-col gap-4"
             >
-              <div className="space-y-3">
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Task Title (e.g. Study DSA)"
-                    className="w-full bg-transparent p-0 pl-8 font-bold text-sm text-textPrimary focus:ring-0 border-none outline-none"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                  />
-                  <Plus className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-textMuted group-hover:text-primary transition-colors" />
-                </div>
-
-                {newTitle && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <textarea 
-                      placeholder="Add description (optional)..."
-                      className="w-full bg-card/50 border border-border rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30 min-h-[60px] text-textPrimary"
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                    />
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 flex items-center gap-2 bg-card/50 border border-border rounded-xl px-3 py-2">
-                        <Clock className="w-3.5 h-3.5 text-textMuted" />
-                        <input 
-                          type="number"
-                          placeholder="Est. Minutes"
-                          className="bg-transparent border-none focus:ring-0 text-xs font-bold w-full p-0 text-textPrimary"
-                          value={estimatedMins}
-                          onChange={(e) => setEstimatedMins(e.target.value ? Number(e.target.value) : '')}
-                        />
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={() => setTimerEnabled(!timerEnabled)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${timerEnabled ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-card text-textMuted border border-border hover:border-primary/50'}`}
-                      >
-                        <Timer className="w-3.5 h-3.5" />
-                        {timerEnabled ? 'Timer ON' : 'Enable Timer'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="New Task..."
+                  className="w-full bg-transparent p-0 pl-8 font-bold text-sm text-textPrimary focus:ring-0 border-none outline-none"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+                <Plus className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-textMuted" />
               </div>
-              
+
               {newTitle && (
-                <div className="flex items-center justify-end border-t border-border/50 pt-3">
-                  <button 
-                    type="submit"
-                    disabled={addTaskMutation.isPending}
-                    className="text-[10px] font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
-                  >
-                    {addTaskMutation.isPending ? 'Adding...' : 'Press Enter or Click to Add'}
-                  </button>
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <textarea 
+                    placeholder="Task description (optional)..."
+                    className="w-full bg-card/50 border border-border rounded-xl p-3 text-xs font-medium focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-textPrimary"
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                  />
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 flex items-center gap-2 bg-card/50 border border-border rounded-xl px-3 py-2">
+                      <Clock className="w-3.5 h-3.5 text-textMuted" />
+                      <input 
+                        type="number"
+                        placeholder="Mins"
+                        className="bg-transparent border-none focus:ring-0 text-xs font-bold w-full p-0 text-textPrimary"
+                        value={estimatedMins}
+                        onChange={(e) => setEstimatedMins(e.target.value ? Number(e.target.value) : '')}
+                      />
+                    </div>
+                    
+                    <button 
+                      type="button"
+                      onClick={() => setTimerEnabled(!timerEnabled)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-[10px] font-bold uppercase ${timerEnabled ? 'bg-primary/10 border-primary text-primary' : 'bg-card/50 border-border text-textMuted'}`}
+                    >
+                      <Timer className="w-3.5 h-3.5" />
+                      {timerEnabled ? 'Timer On' : 'No Timer'}
+                    </button>
+
+                    <button 
+                      type="submit"
+                      className="bg-primary text-white text-[10px] font-bold uppercase px-4 py-2 rounded-xl shadow-lg shadow-primary/20"
+                    >
+                      Add Task
+                    </button>
+                  </div>
                 </div>
               )}
             </form>
-
-            {(!plan?.tasks || plan.tasks.length === 0) && (
-              <div className="text-center py-16 bg-surface/30 rounded-[2.5rem] border-2 border-dashed border-border text-textMuted space-y-3">
-                <div className="bg-card w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border border-border shadow-sm">
-                  <Plus className="w-6 h-6 text-border" />
-                </div>
-                <div>
-                  <p className="font-bold text-textPrimary">No tasks planned</p>
-                  <p className="text-xs font-medium">Start planning your day by adding your first task above.</p>
-                </div>
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* Right: Timeline */}
+        <div className="lg:col-span-4">
+          <DailyTimeline dateStr={dateStr} onTaskDrop={handleTaskDrop} />
         </div>
       </div>
     </div>

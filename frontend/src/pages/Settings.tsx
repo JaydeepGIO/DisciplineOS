@@ -42,8 +42,9 @@ const Settings: React.FC = () => {
   // --- SCORING WEIGHTS ---
   const [weights, setWeights] = useState({
     habit: 0.5,
-    task: 0.4,
-    reflection: 0.1
+    task: 0.3,
+    reflection: 0.1,
+    schedule: 0.1
   });
 
   const { data: rules } = useQuery({
@@ -58,7 +59,8 @@ const Settings: React.FC = () => {
       setWeights({
         habit: activeRule.habit_weight,
         task: activeRule.task_weight,
-        reflection: activeRule.reflection_weight
+        reflection: activeRule.reflection_weight,
+        schedule: activeRule.schedule_weight || 0
       });
     }
   }, [activeRule]);
@@ -75,7 +77,7 @@ const Settings: React.FC = () => {
     }
   });
 
-  const totalWeight = Math.round((weights.habit + weights.task + weights.reflection) * 100) / 100;
+  const totalWeight = Math.round((weights.habit + weights.task + weights.reflection + weights.schedule) * 100) / 100;
   const isWeightsValid = totalWeight === 1.0;
 
   const handleWeightChange = (field: keyof typeof weights, value: number) => {
@@ -88,7 +90,8 @@ const Settings: React.FC = () => {
       name: 'Default',
       habit_weight: weights.habit,
       task_weight: weights.task,
-      reflection_weight: weights.reflection
+      reflection_weight: weights.reflection,
+      schedule_weight: weights.schedule
     });
   };
 
@@ -268,7 +271,8 @@ const Settings: React.FC = () => {
                   {[
                     { label: 'Habits', key: 'habit', color: 'accent' },
                     { label: 'Tasks', key: 'task', color: 'primary' },
-                    { label: 'Reflections', key: 'reflection', color: 'emerald-500' }
+                    { label: 'Reflections', key: 'reflection', color: 'emerald-500' },
+                    { label: 'Schedule Adherence', key: 'schedule', color: 'amber-500' }
                   ].map((item) => (
                     <div key={item.key} className="space-y-4">
                       <div className="flex justify-between items-center">

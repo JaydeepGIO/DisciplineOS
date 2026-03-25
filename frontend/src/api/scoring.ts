@@ -5,6 +5,7 @@ export interface ScoringRuleInput {
   habit_weight: number;
   task_weight: number;
   reflection_weight: number;
+  schedule_weight: number;
   formula_config?: Record<string, any>;
 }
 

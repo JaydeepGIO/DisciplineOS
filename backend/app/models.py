@@ -3,7 +3,7 @@ from datetime import datetime, date, time
 from typing import List, Optional
 from sqlalchemy import String, Boolean, DateTime, Date, Time, Numeric, ForeignKey, Index, text, ARRAY, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, TSTZRANGE
 from .database import Base
 
 class TimestampMixin:
@@ -90,6 +90,23 @@ class PlannedTask(Base, TimestampMixin):
         Index("idx_planned_tasks_user_id", "user_id"),
     )
 
+class TimeBlock(Base, TimestampMixin):
+    __tablename__ = "time_blocks"
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    task_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("planned_tasks.id", ondelete="SET NULL"), nullable=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String, default="planned") # planned, active, completed, missed
+    metadata_: Mapped[dict] = mapped_column(JSONB, default={})
+
+    __table_args__ = (
+        Index("idx_time_blocks_user_date", "user_id", "start_time"),
+        Index("idx_time_blocks_task_id", "task_id"),
+        # We'll use a raw SQL constraint for overlap prevention in the migration
+        # or as a CheckConstraint if supported, but EXCLUDE is PG-specific.
+    )
+
 class HabitLog(Base, TimestampMixin):
     __tablename__ = "habit_logs"
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
@@ -164,8 +181,9 @@ class ScoringRule(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     habit_weight: Mapped[float] = mapped_column(Numeric, default=0.5)
-    task_weight: Mapped[float] = mapped_column(Numeric, default=0.4)
+    task_weight: Mapped[float] = mapped_column(Numeric, default=0.3)
     reflection_weight: Mapped[float] = mapped_column(Numeric, default=0.1)
+    schedule_weight: Mapped[float] = mapped_column(Numeric, default=0.1)
     formula_config: Mapped[dict] = mapped_column(JSONB, default={})
 
     __table_args__ = (Index("idx_scoring_rules_user_id", "user_id"),)
@@ -180,6 +198,7 @@ class DisciplineScore(Base, TimestampMixin):
     habit_score: Mapped[float] = mapped_column(Numeric, default=0)
     task_score: Mapped[float] = mapped_column(Numeric, default=0)
     reflection_score: Mapped[float] = mapped_column(Numeric, default=0)
+    schedule_score: Mapped[float] = mapped_column(Numeric, default=0)
     habits_completed: Mapped[int] = mapped_column(default=0)
     habits_total: Mapped[int] = mapped_column(default=0)
     tasks_completed: Mapped[int] = mapped_column(default=0)

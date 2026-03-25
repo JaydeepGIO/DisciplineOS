@@ -33,6 +33,10 @@ async def get_report_status(
     status = "processing"
     download_url = None
     
+    # Check for failure first
+    if os.path.exists(os.path.join(storage_dir, f"report_{job_id}.failed")):
+        return {"job_id": job_id, "status": "failed", "download_url": None}
+
     # Check for any possible extension
     for ext in [".pdf", ".txt", ".csv", ".json", ".zip"]:
         f_path = os.path.join(storage_dir, f"report_{job_id}{ext}")
