@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 from sqlalchemy.future import select
 from typing import List, Optional
 import uuid
 from datetime import date, datetime, timezone
 from ..database import get_db
-from ..models import HabitLog, TaskLog, HabitTemplate, PlannedTask, DailyPlan, DisciplineScore, User
+from ..models import HabitLog, TaskLog, HabitTemplate, PlannedTask, DailyPlan, DisciplineScore, User, TimeBlock
 from ..schemas import HabitLogCreate, HabitLogRead, TaskLogCreate, TrackingDayRead
 from ..dependencies import get_current_user
-from ..services.scoring_service import recompute_daily_scores
-from ..services.streak_service import update_streak
+from ..workers.tasks.analytics_tasks import recompute_user_score
 
 router = APIRouter(prefix="/tracking", tags=["tracking"])
 
@@ -126,8 +126,8 @@ async def log_habit(date_str: date, log_in: HabitLogCreate, current_user: User =
     if log.completion_ratio >= 1.0:
         await update_streak(db, current_user.id, log_in.habit_id, date_str)
         
-    # 3. Recompute score
-    await recompute_daily_scores(db, current_user.id, date_str)
+    # 3. Recompute score (Async)
+    recompute_user_score.delay(str(current_user.id), date_str.isoformat())
     
     return log
 
@@ -153,8 +153,18 @@ async def log_task(date_str: date, log_in: TaskLogCreate, current_user: User = D
     
     await db.commit()
     
-    # 2. Recompute score
-    await recompute_daily_scores(db, current_user.id, date_str)
+    # NEW: Update linked TimeBlocks if task is completed
+    if log_in.completed:
+        await db.execute(
+            update(TimeBlock)
+            .where(TimeBlock.task_id == log_in.planned_task_id)
+            .where(TimeBlock.status != "completed")
+            .values(status="completed")
+        )
+        await db.commit()
+    
+    # 2. Recompute score (Async)
+    recompute_user_score.delay(str(current_user.id), date_str.isoformat())
     
     return {"status": "ok"}
 
@@ -181,6 +191,15 @@ async def start_task_timer(task_id: uuid.UUID, current_user: User = Depends(get_
         
     log.is_running = True
     log.started_at = datetime.now(timezone.utc)
+    
+    # NEW: Mark associated TimeBlock as active
+    await db.execute(
+        update(TimeBlock)
+        .where(TimeBlock.task_id == task_id)
+        .where(TimeBlock.status == "planned")
+        .values(status="active")
+    )
+    
     await db.commit()
     return {"status": "started"}
 
@@ -220,6 +239,15 @@ async def stop_task_timer(task_id: uuid.UUID, completion_note: Optional[str] = N
     if completion_note:
         log.completion_note = completion_note
         
+    # NEW: Update associated TimeBlock to completed
+    await db.execute(
+        update(TimeBlock)
+        .where(TimeBlock.task_id == task_id)
+        .where(TimeBlock.status != "completed")
+        .values(status="completed")
+    )
+        
     await db.commit()
-    await recompute_daily_scores(db, current_user.id, log.log_date)
+    # 2. Recompute score (Async)
+    recompute_user_score.delay(str(current_user.id), log.log_date.isoformat())
     return {"status": "stopped", "actual_mins": log.actual_mins}

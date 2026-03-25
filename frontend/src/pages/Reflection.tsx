@@ -40,10 +40,13 @@ const Reflection: React.FC = () => {
   const mutation = useMutation({
     mutationFn: (data: any) => reflectionsApi.createEntry(dateStr, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reflection-entry', dateStr] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      // Small delay to allow async scoring to finish in background
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['reflection-entry', dateStr] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }, 1500);
     },
   });
 

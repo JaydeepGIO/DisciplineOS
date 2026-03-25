@@ -16,5 +16,9 @@ BEAT_SCHEDULE = {
     "send-habit-reminders": {
         "task": "app.workers.tasks.notification_tasks.send_habit_reminders",
         "schedule": crontab(minute="*"), # Every minute
+    },
+    "update-time-block-statuses": {
+        "task": "app.workers.tasks.time_block_tasks.update_time_block_statuses",
+        "schedule": crontab(minute="*"), # Every minute
     }
 }

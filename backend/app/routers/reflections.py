@@ -10,7 +10,7 @@ from ..models import ReflectionTemplate, ReflectionEntry, User
 from ..schemas import ReflectionTemplateCreate, ReflectionEntryCreate, ReflectionEntryRead
 from ..dependencies import get_current_user
 from ..schemas import ReflectionTemplateCreate, ReflectionTemplateRead, ReflectionEntryCreate, ReflectionEntryRead
-from ..services.scoring_service import recompute_daily_scores
+from ..workers.tasks.analytics_tasks import recompute_user_score
 
 router = APIRouter(prefix="/reflections", tags=["reflections"])
 
@@ -101,7 +101,7 @@ async def create_reflection(date_str: date, entry_in: ReflectionEntryCreate, cur
     await db.commit()
     await db.refresh(entry)
     
-    # Recompute score
-    await recompute_daily_scores(db, current_user.id, date_str)
+    # Recompute score (Async)
+    recompute_user_score.delay(str(current_user.id), date_str.isoformat())
     
     return entry

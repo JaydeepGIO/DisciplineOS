@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import FocusOverlay from '../tracking/FocusOverlay';
 
 const AppShell: React.FC = () => {
   return (
@@ -10,6 +11,7 @@ const AppShell: React.FC = () => {
         <Outlet />
       </main>
       
+      <FocusOverlay />
       {/* Mobile Nav would be added here */}
     </div>
   );

@@ -11,7 +11,7 @@ const Dashboard: React.FC = () => {
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ['dashboard'],
     queryFn: () => analyticsApi.getDashboard(),
-    staleTime: 30000,
+    staleTime: 5000,
   });
 
   if (isLoading) {

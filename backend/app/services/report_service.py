@@ -410,4 +410,13 @@ async def generate_user_report(user_id: str, job_id: str, config: dict):
     except Exception as e:
         print(f"[REPORT ERROR] Task failed for job {job_id}: {str(e)}")
         traceback.print_exc()
-        return None
+        # Create a .failed file so the API can tell the user what happened
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            storage_dir = os.path.join(base_dir, "generated_reports")
+            failed_path = os.path.join(storage_dir, f"report_{job_id}.failed")
+            with open(failed_path, "w") as f:
+                f.write(str(e))
+        except:
+            pass
+        raise e

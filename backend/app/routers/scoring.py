@@ -25,7 +25,7 @@ async def create_scoring_rule(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    if round(rule_in.habit_weight + rule_in.task_weight + rule_in.reflection_weight, 2) != 1.0:
+    if round(rule_in.habit_weight + rule_in.task_weight + rule_in.reflection_weight + rule_in.schedule_weight, 2) != 1.0:
         raise HTTPException(status_code=422, detail="Weights must sum to 1.0")
     
     new_rule = ScoringRule(
@@ -55,7 +55,8 @@ async def update_scoring_rule(
     h = update_data.get("habit_weight", rule.habit_weight)
     t = update_data.get("task_weight", rule.task_weight)
     r = update_data.get("reflection_weight", rule.reflection_weight)
-    if round(h + t + r, 2) != 1.0:
+    s = update_data.get("schedule_weight", rule.schedule_weight)
+    if round(float(h) + float(t) + float(r) + float(s), 2) != 1.0:
         raise HTTPException(status_code=422, detail="Weights must sum to 1.0")
 
     for field, value in update_data.items():

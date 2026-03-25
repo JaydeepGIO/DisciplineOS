@@ -24,8 +24,11 @@ const Tracking: React.FC = () => {
     mutationFn: ({ habit_id, completed }: { habit_id: string; completed: boolean }) => 
       apiClient.post(`/tracking/habits/${dateStr}`, { habit_id, completed }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tracking', dateStr] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Small delay to allow async scoring to finish in background
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['tracking', dateStr] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      }, 1000);
     },
   });
 
@@ -33,8 +36,12 @@ const Tracking: React.FC = () => {
     mutationFn: ({ planned_task_id, completed }: { planned_task_id: string; completed: boolean }) => 
       apiClient.post(`/tracking/tasks/${dateStr}`, { planned_task_id, completed }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tracking', dateStr] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Small delay to allow async scoring to finish in background
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['tracking', dateStr] });
+        queryClient.invalidateQueries({ queryKey: ['time-blocks', dateStr] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      }, 1000);
     },
   });
 

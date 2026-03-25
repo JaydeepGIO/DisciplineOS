@@ -10,6 +10,30 @@ class TimestampSchema(BaseModel):
     deleted_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
+# --- TIME BLOCKS ---
+
+class TimeBlockBase(BaseModel):
+    title: str
+    start_time: datetime
+    end_time: datetime
+    task_id: Optional[uuid.UUID] = None
+    status: str = "planned" # planned, active, completed, missed
+    metadata_: Dict[str, Any] = Field(default_factory=dict)
+
+class TimeBlockCreate(TimeBlockBase):
+    pass
+
+class TimeBlockUpdate(BaseModel):
+    title: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    task_id: Optional[uuid.UUID] = None
+    status: Optional[str] = None
+    metadata_: Optional[Dict[str, Any]] = None
+
+class TimeBlockRead(TimeBlockBase, TimestampSchema):
+    user_id: uuid.UUID
+
 # --- AUTH ---
 
 class UserRegister(BaseModel):
@@ -216,8 +240,9 @@ class ReflectionEntryRead(TimestampSchema):
 class ScoringRuleBase(BaseModel):
     name: str
     habit_weight: float = 0.5
-    task_weight: float = 0.4
+    task_weight: float = 0.3
     reflection_weight: float = 0.1
+    schedule_weight: float = 0.1
     formula_config: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
 
@@ -229,6 +254,7 @@ class ScoringRuleUpdate(BaseModel):
     habit_weight: Optional[float] = None
     task_weight: Optional[float] = None
     reflection_weight: Optional[float] = None
+    schedule_weight: Optional[float] = None
     formula_config: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
 
