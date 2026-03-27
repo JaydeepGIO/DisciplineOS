@@ -10,6 +10,7 @@ from ..models import HabitLog, TaskLog, HabitTemplate, PlannedTask, DailyPlan, D
 from ..schemas import HabitLogCreate, HabitLogRead, TaskLogCreate, TrackingDayRead
 from ..dependencies import get_current_user
 from ..workers.tasks.analytics_tasks import recompute_user_score
+from ..services.streak_service import update_streak
 
 router = APIRouter(prefix="/tracking", tags=["tracking"])
 
