@@ -107,7 +107,7 @@ const Settings: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reflection-templates'] });
       setSuccessMessage('Template created!');
       setIsTemplateModalOpen(false);
-      setNewTemplate({ name: '', description: '', questions: [{ text: '', type: 'multiline', order: 1 }] });
+      setNewTemplate({ title: '', description: '', questions: [{ text: '', type: 'multiline', order: 1 }] });
       setTimeout(() => setSuccessMessage(null), 3000);
     }
   });
@@ -132,7 +132,7 @@ const Settings: React.FC = () => {
 
   const handleCreateDefaultTemplate = () => {
     createTemplateMutation.mutate({
-      name: 'Daily Review',
+      title: 'Daily Review',
       description: 'Standard evening reflection',
       is_default: true,
       questions: [
@@ -568,8 +568,8 @@ const Settings: React.FC = () => {
             <input 
               required type="text" placeholder="e.g., Weekly Review, Project Focus"
               className="w-full bg-surface border border-border rounded-xl px-4 py-3 font-bold text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              value={newTemplate.name}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+              value={newTemplate.title}
+              onChange={(e) => setNewTemplate(prev => ({ ...prev, title: e.target.value }))}
             />
           </div>
 

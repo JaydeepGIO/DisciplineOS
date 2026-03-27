@@ -1,0 +1,482 @@
+{
+  "user_profile": {
+    "username": "tester",
+    "timezone": "UTC",
+    "preferences": {}
+  },
+  "period": "2026-03-14 to 2026-03-21",
+  "summary_metrics": {
+    "average_discipline_score": 65.5,
+    "top_performing_habit": "Morning Run",
+    "lowest_performing_habit": "Deep Work"
+  },
+  "time_series_data": [
+    {
+      "date": "2026-03-14",
+      "score": 0.0,
+      "breakdown": {
+        "habits": 0,
+        "tasks": 0,
+        "reflection": 0
+      },
+      "habits_logged": [],
+      "tasks": [],
+      "reflection": null
+    },
+    {
+      "date": "2026-03-15",
+      "score": 50.0,
+      "breakdown": {
+        "habits": 0.0,
+        "tasks": 100.0,
+        "reflection": 100.0
+      },
+      "habits_logged": [],
+      "tasks": [],
+      "reflection": {
+        "mood": 5,
+        "energy": 5,
+        "notes": {
+          "What will you do differently tomorrow?": "stick to my routine",
+          "What was my biggest win today?": "i started builiding desciplineOs project",
+          "What distracted me or slowed me down?": "not journaling",
+          "Rate your discipline today (1\u201310)": 3
+        }
+      }
+    },
+    {
+      "date": "2026-03-16",
+      "score": 100.0,
+      "breakdown": {
+        "habits": 100.0,
+        "tasks": 100.0,
+        "reflection": 100.0
+      },
+      "habits_logged": [
+        {
+          "name": "Deep Work",
+          "status": "missed",
+          "value": 0.0,
+          "notes": null
+        },
+        {
+          "name": "Morning Run",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Exercise",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Hydration",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Meditation",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Reading",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "exercise & leg",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "stretching",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Early Wakeup",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "5K steps",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "4L water",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Deep Study",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "DSA",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Mock",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        }
+      ],
+      "tasks": [
+        {
+          "title": "Eat healthy breakfast",
+          "priority": 1,
+          "completed": true,
+          "actual_mins": null,
+          "reflection": null
+        },
+        {
+          "title": "prepare breakfast for tomorrow",
+          "priority": 2,
+          "completed": true,
+          "actual_mins": null,
+          "reflection": null
+        },
+        {
+          "title": "sql joins",
+          "priority": 3,
+          "completed": true,
+          "actual_mins": null,
+          "reflection": null
+        },
+        {
+          "title": "dmart shopping",
+          "priority": 4,
+          "completed": true,
+          "actual_mins": null,
+          "reflection": null
+        },
+        {
+          "title": "1 hour swimming",
+          "priority": 5,
+          "completed": true,
+          "actual_mins": null,
+          "reflection": null
+        }
+      ],
+      "reflection": {
+        "mood": 3,
+        "energy": 2,
+        "notes": {
+          "What will you do differently tomorrow?": "ok",
+          "What was my biggest win today?": "ok",
+          "What distracted me or slowed me down?": "ok",
+          "Rate your discipline today (1\u201310)": 5
+        }
+      }
+    },
+    {
+      "date": "2026-03-17",
+      "score": 40.83,
+      "breakdown": {
+        "habits": 15.0,
+        "tasks": 83.33,
+        "reflection": 0.0
+      },
+      "habits_logged": [
+        {
+          "name": "DSA",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        }
+      ],
+      "tasks": [
+        {
+          "title": "dsa",
+          "priority": 1,
+          "completed": false,
+          "actual_mins": 0,
+          "reflection": null
+        },
+        {
+          "title": "study",
+          "priority": 2,
+          "completed": true,
+          "actual_mins": 331,
+          "reflection": "very good"
+        },
+        {
+          "title": "AI ML",
+          "priority": 3,
+          "completed": true,
+          "actual_mins": 330,
+          "reflection": "timer starting from 5:30 instead of 00:00 \n"
+        },
+        {
+          "title": "mock interview",
+          "priority": 4,
+          "completed": true,
+          "actual_mins": 331,
+          "reflection": "cool"
+        },
+        {
+          "title": "breakfast",
+          "priority": 5,
+          "completed": true,
+          "actual_mins": 0,
+          "reflection": "done"
+        },
+        {
+          "title": "running",
+          "priority": 6,
+          "completed": true,
+          "actual_mins": 0,
+          "reflection": "maja aai gai roj karisu"
+        }
+      ],
+      "reflection": null
+    },
+    {
+      "date": "2026-03-18",
+      "score": 60.0,
+      "breakdown": {
+        "habits": 40.0,
+        "tasks": 100.0,
+        "reflection": 0.0
+      },
+      "habits_logged": [
+        {
+          "name": "exercise & leg",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "4L water",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Deep Study",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Mock",
+          "status": "missed",
+          "value": 0.0,
+          "notes": null
+        }
+      ],
+      "tasks": [],
+      "reflection": null
+    },
+    {
+      "date": "2026-03-19",
+      "score": 76.47,
+      "breakdown": {
+        "habits": 52.94,
+        "tasks": 100.0,
+        "reflection": 100.0
+      },
+      "habits_logged": [
+        {
+          "name": "5K steps",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "4L water",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Deep Study",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "Mock",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        },
+        {
+          "name": "swimming",
+          "status": "completed",
+          "value": 1.0,
+          "notes": null
+        }
+      ],
+      "tasks": [
+        {
+          "title": "study",
+          "priority": 1,
+          "completed": true,
+          "actual_mins": 1,
+          "reflection": "GIL was base of python"
+        }
+      ],
+      "reflection": {
+        "mood": 5,
+        "energy": 5,
+        "notes": {
+          "What was my biggest win today?": "posting first open source project",
+          "What distracted me or slowed me down?": "not today "
+        }
+      }
+    },
+    {
+      "date": "2026-03-20",
+      "score": 0.0,
+      "breakdown": {
+        "habits": 0,
+        "tasks": 0,
+        "reflection": 0
+      },
+      "habits_logged": [],
+      "tasks": [],
+      "reflection": null
+    },
+    {
+      "date": "2026-03-21",
+      "score": 0.0,
+      "breakdown": {
+        "habits": 0,
+        "tasks": 0,
+        "reflection": 0
+      },
+      "habits_logged": [],
+      "tasks": [],
+      "reflection": null
+    }
+  ],
+  "streak_data": [
+    {
+      "habit": "Deep Work",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Morning Run",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Exercise",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Hydration",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Meditation",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Reading",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "exercise & leg",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "stretching",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "Early Wakeup",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "5K steps",
+      "current": 0,
+      "longest": 1
+    },
+    {
+      "habit": "4L water",
+      "current": 0,
+      "longest": 2
+    },
+    {
+      "habit": "Deep Study",
+      "current": 0,
+      "longest": 2
+    },
+    {
+      "habit": "DSA",
+      "current": 0,
+      "longest": 2
+    },
+    {
+      "habit": "Mock",
+      "current": 0,
+      "longest": 2
+    },
+    {
+      "habit": "swimming",
+      "current": 0,
+      "longest": 1
+    }
+  ],
+  "reflections": [
+    {
+      "date": "2026-03-19",
+      "mood": 5,
+      "energy": 5,
+      "answers": {
+        "What was my biggest win today?": "posting first open source project",
+        "What distracted me or slowed me down?": "not today "
+      }
+    },
+    {
+      "date": "2026-03-16",
+      "mood": 3,
+      "energy": 2,
+      "answers": {
+        "What will you do differently tomorrow?": "ok",
+        "What was my biggest win today?": "ok",
+        "What distracted me or slowed me down?": "ok",
+        "Rate your discipline today (1\u201310)": 5
+      }
+    },
+    {
+      "date": "2026-03-15",
+      "mood": 5,
+      "energy": 5,
+      "answers": {
+        "What will you do differently tomorrow?": "stick to my routine",
+        "What was my biggest win today?": "i started builiding desciplineOs project",
+        "What distracted me or slowed me down?": "not journaling",
+        "Rate your discipline today (1\u201310)": 3
+      }
+    }
+  ],
+  "tasks": []
+}

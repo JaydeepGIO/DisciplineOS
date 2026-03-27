@@ -35,7 +35,7 @@ async def create_template(template_in: ReflectionTemplateCreate, current_user: U
 
     new_template = ReflectionTemplate(
         user_id=current_user.id,
-        name=template_in.name,
+        title=template_in.title,
         description=template_in.description,
         is_default=template_in.is_default,
         questions=questions

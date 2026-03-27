@@ -1,0 +1,206 @@
+You are a senior backend architect specializing in FastAPI, PostgreSQL, and high-performance async systems.
+
+I have an existing PostgreSQL schema for a productivity/discipline tracking system. Your task is to analyze, fix, and upgrade the schema to production-grade quality, ensuring correctness, scalability, and compatibility with FastAPI-based async architectures.
+
+Follow the steps below carefully:
+
+---
+
+1. Fix Missing Entities
+
+- Add missing `ReflectionTemplate` table:
+  - id (UUID, PK, default uuid_generate_v4())
+  - user_id (FK → User, indexed)
+  - title
+  - description (nullable)
+  - questions (JSONB)
+  - created_at (timestamp with timezone)
+
+- Define relationship:
+  - ReflectionTemplate (1:N) ReflectionEntry
+
+---
+
+2. Fix Relationship Issues
+
+- Change `PlannedTask → TaskLog` from one-to-one to one-to-many:
+  - Reason: multiple executions, retries, partial completion logs
+
+- Ensure all FKs explicitly define:
+  - ON DELETE CASCADE (for dependent entities)
+  - ON DELETE SET NULL (where optional)
+
+---
+
+3. Enforce TimeBlock Non-Overlap (Critical)
+
+- Prevent overlapping time blocks per user using PostgreSQL exclusion constraints:
+
+  - Use:
+    tsrange(start_time, end_time)
+    WITH && operator
+
+- Constraint must ensure:
+  - No overlapping TimeBlock for same user_id
+
+- Add GIST index for performance
+
+---
+
+4. Normalize and Standardize Schema
+
+- Add to ALL tables:
+  - created_at (timestamptz, default now())
+  - updated_at (timestamptz, auto-update)
+
+- Add `is_active` flag where relevant:
+  - HabitTemplate, TaskTemplate
+
+- Enforce consistent naming:
+  - *_id for foreign keys
+  - *_at for timestamps
+
+---
+
+5. Improve Streak Design
+
+- Do NOT rely purely on stored `current_streak`
+- Design approach:
+
+  Option A (preferred):
+  - Derive streak dynamically from HabitLog
+
+  Option B:
+  - Maintain via async worker (event-driven)
+
+- Add fields:
+  - last_updated_date
+  - longest_streak
+
+- Ensure idempotent updates
+
+---
+
+6. Improve DisciplineScore (Aggregation Layer)
+
+- Treat as derived data
+
+- Add:
+  - UNIQUE(user_id, period_type, period_key)
+
+- Add fields:
+  - consistency_score (optional)
+  - updated_at
+
+- Recommend computation via:
+  - background workers (Celery / RQ / FastAPI background tasks)
+
+---
+
+7. Indexing Strategy (Critical for Async APIs)
+
+Add indexes:
+
+- User:
+  - email (UNIQUE)
+  - username (UNIQUE)
+
+- HabitLog:
+  - (user_id, log_date)
+  - (habit_id, log_date)
+
+- TaskLog:
+  - (user_id, log_date)
+  - (planned_task_id)
+
+- PlannedTask:
+  - (daily_plan_id)
+  - (user_id)
+
+- TimeBlock:
+  - (user_id, start_time)
+
+- DisciplineScore:
+  - (user_id, period_type, period_key)
+
+---
+
+8. Data Integrity Constraints
+
+- NOT NULL where required
+
+- CHECK constraints:
+  - priority_level >= 0
+  - scoring_weight >= 0
+  - duration_secs >= 0
+
+- Ensure enum-like fields:
+  - Use PostgreSQL ENUM or constrained TEXT
+
+---
+
+9. Scalability & Performance
+
+- Partition large tables:
+  - HabitLog → partition by month (log_date)
+  - TaskLog → partition by month
+
+- Ensure append-only log design:
+  - No updates, only inserts
+
+- Optimize for:
+  - high write throughput
+  - analytical queries
+
+---
+
+10. FastAPI Integration Requirements
+
+Design schema compatible with:
+
+- SQLAlchemy (async engine)
+- or SQLModel
+
+Provide:
+
+- ORM models (SQLAlchemy 2.0 style, async-friendly)
+- Relationships using lazy loading strategies:
+  - selectinload preferred over joinedload for scalability
+
+- Avoid N+1 query issues
+
+---
+
+11. Concurrency & Consistency
+
+- Ensure safe concurrent writes:
+  - Use transactions where needed
+
+- Consider:
+  - optimistic locking (optional)
+  - idempotent inserts for logs
+
+---
+
+12. Output Requirements
+
+Provide:
+
+1. Final PostgreSQL DDL (tables, constraints, indexes)
+2. SQLAlchemy models (async-compatible)
+3. Relationship diagram (ER or structured)
+4. Explanation of key design decisions
+5. Query examples:
+   - streak calculation
+   - discipline score aggregation
+   - time conflict detection
+
+---
+
+Goal:
+
+Design a production-ready schema optimized for:
+- FastAPI async backend
+- high concurrency
+- real-time tracking
+- analytics-heavy workloads

@@ -210,14 +210,14 @@ class ReflectionQuestion(BaseModel):
     order: int
 
 class ReflectionTemplateCreate(BaseModel):
-    name: str
+    title: str
     description: Optional[str] = None
     is_default: bool = False
     questions: List[ReflectionQuestion]
 
 class ReflectionTemplateRead(TimestampSchema):
     user_id: uuid.UUID
-    name: str
+    title: str
     description: Optional[str]
     is_default: bool
     questions: List[Dict[str, Any]]
@@ -270,6 +270,8 @@ class DisciplineScoreRead(TimestampSchema):
     habit_score: float
     task_score: float
     reflection_score: float
+    schedule_score: float
+    consistency_score: float
     habits_completed: int
     habits_total: int
     tasks_completed: int

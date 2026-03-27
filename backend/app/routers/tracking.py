@@ -124,6 +124,7 @@ async def log_habit(date_str: date, log_in: HabitLogCreate, current_user: User =
     
     # 2. Update streak (if completed)
     if log.completion_ratio >= 1.0:
+        from ..services.streak_service import update_streak
         await update_streak(db, current_user.id, log_in.habit_id, date_str)
         
     # 3. Recompute score (Async)
