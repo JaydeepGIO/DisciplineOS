@@ -25,7 +25,7 @@ wheels/
 .pytest_cache/
 .coverage
 htmlcov/
-celerybeat-schedule
+celerybeat-schedule*
 celerybeat-schedule.db
 
 # --- Node / Frontend ---
