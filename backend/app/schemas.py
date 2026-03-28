@@ -158,6 +158,15 @@ class PlannedTaskRead(TimestampSchema):
     started_at: Optional[datetime] = None
     completion_note: Optional[str] = None
 
+class PlannedTaskUpdate(BaseModel):
+    title: Optional[str] = None
+    priority_rank: Optional[int] = None
+    scheduled_time: Optional[time] = None
+    estimated_mins: Optional[int] = None
+    scoring_weight: Optional[float] = None
+    task_template_id: Optional[uuid.UUID] = None
+    timer_enabled: Optional[bool] = None
+
 class DailyPlanCreate(BaseModel):
     morning_intention: Optional[str] = None
     notes: Optional[str] = None
@@ -214,6 +223,12 @@ class ReflectionTemplateCreate(BaseModel):
     description: Optional[str] = None
     is_default: bool = False
     questions: List[ReflectionQuestion]
+
+class ReflectionTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_default: Optional[bool] = None
+    questions: Optional[List[ReflectionQuestion]] = None
 
 class ReflectionTemplateRead(TimestampSchema):
     user_id: uuid.UUID
