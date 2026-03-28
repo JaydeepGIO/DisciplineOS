@@ -19,7 +19,8 @@ import {
   Clock,
   Globe,
   Star,
-  X
+  X,
+  Edit2
 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 
@@ -33,11 +34,14 @@ const Settings: React.FC = () => {
 
   // --- MODAL STATE ---
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     description: '',
     questions: [{ text: '', type: 'multiline', order: 1 }]
   });
+
+  const isEditing = !!editingTemplateId;
 
   // --- SCORING WEIGHTS ---
   const [weights, setWeights] = useState({
@@ -112,6 +116,18 @@ const Settings: React.FC = () => {
     }
   });
 
+  const updateTemplateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => reflectionsApi.updateTemplate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reflection-templates'] });
+      setSuccessMessage('Template updated!');
+      setIsTemplateModalOpen(false);
+      setEditingTemplateId(null);
+      setNewTemplate({ name: '', description: '', questions: [{ text: '', type: 'multiline', order: 1 }] });
+      setTimeout(() => setSuccessMessage(null), 3000);
+    }
+  });
+
   const deleteTemplateMutation = useMutation({
     mutationFn: reflectionsApi.deleteTemplate,
     onSuccess: () => {
@@ -164,12 +180,33 @@ const Settings: React.FC = () => {
     setNewTemplate(prev => ({ ...prev, questions: updated }));
   };
 
-  const handleCreateCustomTemplate = (e: React.FormEvent) => {
-    e.preventDefault();
-    createTemplateMutation.mutate({
-      ...newTemplate,
-      is_default: (templates?.length || 0) === 0
+  const handleEditTemplate = (template: any) => {
+    setEditingTemplateId(template.id);
+    setNewTemplate({
+      name: template.name,
+      description: template.description || '',
+      questions: template.questions.map((q: any) => ({
+        text: q.text,
+        type: q.type,
+        order: q.order
+      }))
     });
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleSubmitTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && editingTemplateId) {
+      updateTemplateMutation.mutate({
+        id: editingTemplateId,
+        data: newTemplate
+      });
+    } else {
+      createTemplateMutation.mutate({
+        ...newTemplate,
+        is_default: (templates?.length || 0) === 0
+      });
+    }
   };
 
   // --- DATA EXPORT ---
@@ -314,7 +351,11 @@ const Settings: React.FC = () => {
                     <h2 className="text-2xl font-bold text-textPrimary">Reflection Templates</h2>
                   </div>
                   <button 
-                    onClick={() => setIsTemplateModalOpen(true)}
+                    onClick={() => {
+                      setEditingTemplateId(null);
+                      setNewTemplate({ name: '', description: '', questions: [{ text: '', type: 'multiline', order: 1 }] });
+                      setIsTemplateModalOpen(true);
+                    }}
                     className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:underline"
                   >
                     <Plus className="w-4 h-4" /> Create Custom
@@ -332,6 +373,13 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleEditTemplate(t)}
+                          className="p-2 hover:bg-primary/10 rounded-xl text-primary transition-colors border border-transparent hover:border-primary/20"
+                          title="Edit Template"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                         {!t.is_default && (
                           <button 
                             onClick={() => setDefaultMutation.mutate(t.id)}
@@ -556,13 +604,13 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* --- CREATE TEMPLATE MODAL --- */}
+      {/* --- CREATE/EDIT TEMPLATE MODAL --- */}
       <Modal 
         isOpen={isTemplateModalOpen} 
         onClose={() => setIsTemplateModalOpen(false)} 
-        title="Create Custom Template"
+        title={isEditing ? 'Edit Template' : 'Create Custom Template'}
       >
-        <form onSubmit={handleCreateCustomTemplate} className="space-y-6">
+        <form onSubmit={handleSubmitTemplate} className="space-y-6">
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-textMuted">Template Name</label>
             <input 
@@ -621,10 +669,12 @@ const Settings: React.FC = () => {
 
           <button 
             type="submit"
-            disabled={createTemplateMutation.isPending}
+            disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
             className="w-full bg-primary text-white py-4 rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
           >
-            {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
+            {createTemplateMutation.isPending || updateTemplateMutation.isPending 
+              ? (isEditing ? 'Updating...' : 'Creating...') 
+              : (isEditing ? 'Update Template' : 'Create Template')}
           </button>
         </form>
       </Modal>

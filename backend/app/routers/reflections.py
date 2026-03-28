@@ -7,9 +7,8 @@ import uuid
 from datetime import date, datetime
 from ..database import get_db
 from ..models import ReflectionTemplate, ReflectionEntry, User
-from ..schemas import ReflectionTemplateCreate, ReflectionEntryCreate, ReflectionEntryRead
+from ..schemas import ReflectionTemplateCreate, ReflectionTemplateUpdate, ReflectionTemplateRead, ReflectionEntryCreate, ReflectionEntryRead
 from ..dependencies import get_current_user
-from ..schemas import ReflectionTemplateCreate, ReflectionTemplateRead, ReflectionEntryCreate, ReflectionEntryRead
 from ..workers.tasks.analytics_tasks import recompute_user_score
 
 router = APIRouter(prefix="/reflections", tags=["reflections"])
@@ -44,6 +43,40 @@ async def create_template(template_in: ReflectionTemplateCreate, current_user: U
     await db.commit()
     await db.refresh(new_template)
     return new_template
+
+@router.put("/templates/{template_id}", response_model=ReflectionTemplateRead)
+async def update_template(
+    template_id: uuid.UUID, 
+    template_in: ReflectionTemplateUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(ReflectionTemplate).filter(ReflectionTemplate.id == template_id, ReflectionTemplate.user_id == current_user.id))
+    template = result.scalars().first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    update_data = template_in.model_dump(exclude_unset=True)
+    
+    if "is_default" in update_data and update_data["is_default"]:
+        await db.execute(update(ReflectionTemplate).filter(ReflectionTemplate.user_id == current_user.id).values(is_default=False))
+    
+    if "questions" in update_data:
+        questions = []
+        for q in update_data["questions"]:
+            # Handle potential Dict or ReflectionQuestion object
+            q_dict = q if isinstance(q, dict) else q.model_dump()
+            if not q_dict.get("id"):
+                q_dict["id"] = str(uuid.uuid4())
+            questions.append(q_dict)
+        update_data["questions"] = questions
+
+    for key, value in update_data.items():
+        setattr(template, key, value)
+    
+    await db.commit()
+    await db.refresh(template)
+    return template
 
 @router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_template(template_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

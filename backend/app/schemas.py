@@ -215,6 +215,12 @@ class ReflectionTemplateCreate(BaseModel):
     is_default: bool = False
     questions: List[ReflectionQuestion]
 
+class ReflectionTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_default: Optional[bool] = None
+    questions: Optional[List[ReflectionQuestion]] = None
+
 class ReflectionTemplateRead(TimestampSchema):
     user_id: uuid.UUID
     name: str
