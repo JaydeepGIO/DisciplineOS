@@ -4,7 +4,7 @@ import { plansApi, CreatePlanInput } from '../api/plans';
 import { createTimeBlock, getDailyTimeBlocks } from '../api/time-blocks';
 import { DailyPlan, PlannedTask, TimeBlock } from '../types';
 import { format, addMinutes, parseISO } from 'date-fns';
-import { Plus, Trash2, GripVertical, Clock, Target, CalendarDays, Save, CheckCircle2, Timer, CalendarCheck } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Clock, Target, CalendarDays, Save, CheckCircle2, Timer, CalendarCheck, Edit2, X } from 'lucide-react';
 import DailyTimeline from '../components/tracking/DailyTimeline';
 
 const DailyPlanner: React.FC = () => {
@@ -15,6 +15,13 @@ const DailyPlanner: React.FC = () => {
   const [morningIntention, setMorningIntention] = useState('');
   const [generalNotes, setGeneralNotes] = useState('');
   const [isSaved, setIsSaved] = useState(true);
+
+  // Edit states
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editEstimatedMins, setEditEstimatedMins] = useState<number | ''>('');
+  const [editTimerEnabled, setEditTimerEnabled] = useState(false);
 
   const { data: plan, isLoading: planLoading } = useQuery<DailyPlan>({
     queryKey: ['plan', dateStr],
@@ -74,6 +81,24 @@ const DailyPlanner: React.FC = () => {
     }
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: (data: { id: string; title: string; description?: string; estimated_mins?: number; timer_enabled: boolean }) => 
+      plansApi.updateTask(dateStr, data.id, { 
+        title: data.title, 
+        description: data.description,
+        estimated_mins: data.estimated_mins,
+        timer_enabled: data.timer_enabled,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plan', dateStr] });
+      setEditingTaskId(null);
+    },
+    onError: (error) => {
+      console.error('Failed to update task:', error);
+      alert('Failed to update task.');
+    }
+  });
+
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => plansApi.deleteTask(dateStr, id),
     onSuccess: () => {
@@ -107,6 +132,14 @@ const DailyPlanner: React.FC = () => {
   const handleNotesChange = (val: string) => {
     setGeneralNotes(val);
     setIsSaved(false);
+  };
+
+  const startEditing = (task: PlannedTask) => {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description || '');
+    setEditEstimatedMins(task.estimated_mins || '');
+    setEditTimerEnabled(task.timer_enabled);
   };
 
   const handleTaskDrop = (taskId: string, startTime: string) => {
@@ -214,6 +247,68 @@ const DailyPlanner: React.FC = () => {
           <div className="space-y-3">
             {plan?.tasks?.map((task) => {
               const isScheduled = blocks?.some(b => b.task_id === task.id);
+              const isEditing = editingTaskId === task.id;
+
+              if (isEditing) {
+                return (
+                  <div key={task.id} className="bg-card border border-accent p-4 rounded-2xl space-y-4 shadow-md animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Edit Task</h4>
+                      <button onClick={() => setEditingTaskId(null)} className="text-textMuted hover:text-textPrimary">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <input 
+                      type="text"
+                      className="w-full bg-surface border border-border rounded-xl p-3 text-sm font-bold focus:border-accent focus:ring-1 focus:ring-accent outline-none text-textPrimary"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                    />
+                    <textarea 
+                      placeholder="Description (optional)..."
+                      className="w-full bg-surface border border-border rounded-xl p-3 text-xs font-medium focus:border-accent focus:ring-1 focus:ring-accent outline-none text-textPrimary"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 flex items-center gap-2 bg-surface border border-border rounded-xl px-3 py-2">
+                        <Clock className="w-3.5 h-3.5 text-textMuted" />
+                        <input 
+                          type="number"
+                          placeholder="Mins"
+                          className="bg-transparent border-none focus:ring-0 text-xs font-bold w-full p-0 text-textPrimary"
+                          value={editEstimatedMins}
+                          onChange={(e) => setEditEstimatedMins(e.target.value ? Number(e.target.value) : '')}
+                        />
+                      </div>
+                      
+                      <button 
+                        type="button"
+                        onClick={() => setEditTimerEnabled(!editTimerEnabled)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-[10px] font-bold uppercase ${editTimerEnabled ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-textMuted'}`}
+                      >
+                        <Timer className="w-3.5 h-3.5" />
+                        {editTimerEnabled ? 'Timer On' : 'No Timer'}
+                      </button>
+
+                      <button 
+                        onClick={() => updateTaskMutation.mutate({
+                          id: task.id,
+                          title: editTitle,
+                          description: editDescription,
+                          estimated_mins: editEstimatedMins === '' ? undefined : Number(editEstimatedMins),
+                          timer_enabled: editTimerEnabled
+                        })}
+                        disabled={updateTaskMutation.isPending}
+                        className="bg-accent text-white text-[10px] font-bold uppercase px-4 py-2 rounded-xl shadow-lg shadow-accent/20"
+                      >
+                        {updateTaskMutation.isPending ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div 
                   key={task.id} 
@@ -246,12 +341,20 @@ const DailyPlanner: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <button 
-                    onClick={() => deleteTaskMutation.mutate(task.id)}
-                    className="p-2 opacity-0 group-hover:opacity-100 hover:bg-danger/10 rounded-xl text-danger transition-all border border-transparent hover:border-danger/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => startEditing(task)}
+                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-accent/10 rounded-xl text-accent transition-all border border-transparent hover:border-accent/20"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => deleteTaskMutation.mutate(task.id)}
+                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-danger/10 rounded-xl text-danger transition-all border border-transparent hover:border-danger/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               );
             })}

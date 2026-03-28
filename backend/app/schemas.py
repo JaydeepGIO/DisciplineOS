@@ -158,6 +158,15 @@ class PlannedTaskRead(TimestampSchema):
     started_at: Optional[datetime] = None
     completion_note: Optional[str] = None
 
+class PlannedTaskUpdate(BaseModel):
+    title: Optional[str] = None
+    priority_rank: Optional[int] = None
+    scheduled_time: Optional[time] = None
+    estimated_mins: Optional[int] = None
+    scoring_weight: Optional[float] = None
+    task_template_id: Optional[uuid.UUID] = None
+    timer_enabled: Optional[bool] = None
+
 class DailyPlanCreate(BaseModel):
     morning_intention: Optional[str] = None
     notes: Optional[str] = None

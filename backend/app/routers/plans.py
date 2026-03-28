@@ -7,7 +7,7 @@ import uuid
 from datetime import date, datetime
 from ..database import get_db
 from ..models import DailyPlan, PlannedTask, User, TaskTemplate
-from ..schemas import DailyPlanCreate, DailyPlanRead, PlannedTaskCreate, PlannedTaskRead
+from ..schemas import DailyPlanCreate, DailyPlanRead, PlannedTaskCreate, PlannedTaskRead, PlannedTaskUpdate
 from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/plans", tags=["plans"])
@@ -90,6 +90,27 @@ async def add_task_to_plan(date_str: date, task_in: PlannedTaskCreate, current_u
     await db.commit()
     await db.refresh(new_task)
     return new_task
+
+@router.put("/{date_str}/tasks/{task_id}", response_model=PlannedTaskRead)
+async def update_planned_task(
+    date_str: date, 
+    task_id: uuid.UUID, 
+    task_in: PlannedTaskUpdate, 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(PlannedTask).filter(PlannedTask.id == task_id, PlannedTask.user_id == current_user.id))
+    task = result.scalars().first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    update_data = task_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(task, field, value)
+    
+    await db.commit()
+    await db.refresh(task)
+    return task
 
 @router.delete("/{date_str}/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_planned_task(date_str: date, task_id: uuid.UUID, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
